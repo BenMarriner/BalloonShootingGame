@@ -3,10 +3,12 @@ import pygame  # Using version 2.0.0
 import random
 from pygame.constants import K_DOWN, K_ESCAPE, K_SPACE, K_UP
 
+# Window size, sprite size and framerate
 RES = WIDTH, HEIGHT = 640, 480
 SPRITE_SIZE = 64
 FPS = 60
 
+# Initialise window
 BACKGROUND_COLOUR = (255, 255, 255)
 pygame.init()
 window = pygame.display.set_mode(RES)
@@ -42,6 +44,7 @@ BALLOON_CHANGE_DIRECTION_INTERVAL_MAX = 1
 quit_requested = False
 
 # Define base class for all game objects (i.e.: Player, balloon, bullet)
+# All GameObjects have an update function that is called every frame as well as a method that checks collisions
 class GameObject(pygame.sprite.Sprite):
 
     def __init__(self, image, pos, move_speed) -> None:
@@ -121,6 +124,7 @@ class Bullet(GameObject):
         
         super(Bullet, self).update()
         
+        # Keep the bullet moving
         self.rect.x += self.move_speed
 
     def detect_collisions(self):
@@ -151,6 +155,7 @@ class Balloon(GameObject):
         
         super(Balloon, self).update()
         
+        # Check if balloon has collided with the top or bottom sides of the screen
         if self.rect.y <= TBOUNDARY:
             self.set_move_direction(True)
         
@@ -174,6 +179,7 @@ class Balloon(GameObject):
         super(Balloon, self).detect_collisions()    
         self.balloon_hit = pygame.sprite.spritecollide(self, bullets, False)
 
+    # Set the move direction as well as the velocity of the balloon
     def set_move_direction(self, direction):
         
         self.move_direction = direction
@@ -183,6 +189,7 @@ class Balloon(GameObject):
         else:
                 self.move_speed = -(abs(self.move_speed))
 
+    # Calculate a new interval at which the balloon will change direction
     def calculate_new_interval(self):
         return round(FPS * random.uniform(BALLOON_CHANGE_DIRECTION_INTERVAL_MIN, BALLOON_CHANGE_DIRECTION_INTERVAL_MAX))
 
@@ -232,25 +239,30 @@ while not (pygame.event.get(pygame.QUIT) or quit_requested):
     # Game will play out until the balloon is hit. When the balloon is hit, the win message is displayed
     if not balloon.balloon_hit:
         
+        # Update objects
         update_queue = [player]
         if not balloon.balloon_hit: update_queue.append(balloon)
         update_queue.extend(bullets)
 
         update(update_queue)
 
+        # Render objects
         render_queue = [player]
         if not balloon.balloon_hit: render_queue.append(balloon)
         render_queue.extend(bullets)
 
         draw_game(render_queue)
 
+        # Display missed shots
         display_message('Missed shots: %d' % player.missed_shots, (0, 0))
 
     else:
+        # Display win message
         window.fill(BACKGROUND_COLOUR)
         display_message('You win!', (WIDTH / 2, HEIGHT / 2))
         pygame.display.flip()
 
+    # Maintain a framerate of 60 FPS
     clock.tick(FPS)
 
 pygame.quit()
